@@ -149,6 +149,53 @@ const newRole = () => {
     })
 };
 
+const newEmployee = () => {
+    inquirer.prompt([
+        {
+            type: `input`,
+            name: `firstName`,
+            message:`What is the employee's First Name?`
+        },
+        {
+            type: `input`,
+            name: `lastName`,
+            message:`What is the employee's Last Name?`
+        },
+        {
+            type: `input`,
+            name: `role_id`,
+            message:`What is the corresponding role id?`
+        },
+        {
+            type: `input`,
+            name: `manager_id`,
+            message:`What is the corresponding manager id if it exists?`
+        }
+    ])
+    .then((user) => {
+        connection.query(
+            `INSERT INTO employee SET ?`,
+            {
+                first_name : user.firstName,
+                last_name: user.lastName,
+                role_id: user.role_id,
+                manager_id: user.manager_id || null
+
+            }
+        ,
+        ((err) => {
+            if(err){
+                console.log(`There was an error, check if the selected corresponding id's exist`)
+                throw err;
+                start();
+            }
+            else{
+            console.log(`${user.firstName} ${user.lastName} has been added successfully!`)
+            start();
+            }
+        }))
+    })
+};
 
 
 // Connection to MySql

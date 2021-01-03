@@ -8,4 +8,4 @@ manager_id INT
 -- After Creating Role and Department Tables
 ALTER TABLE employee
 ADD FOREIGN KEY(role_id) REFERENCES role(id),
-ADD FOREIGN KEY(manager_id) REFERENCES role(id);
+ADD FOREIGN KEY(manager_id) REFERENCES employee(id);
