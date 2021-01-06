@@ -1,13 +1,22 @@
 const mysql = require(`mysql`);
 const inquirer = require('inquirer');
-
+const cTable = require('console.table');
+// console.table([
+//     {
+//       name: 'foo',
+//       age: 10
+//     }, {
+//       name: 'bar',
+//       age: 20
+//     }
+//   ]);
 // MySql Connection Information
 const connection = mysql.createConnection(
     {
         host: `localhost`,
         port: `3306`,
-        user:`root`,
-        password:`mikeServer1!`,
+        user: `root`,
+        password: `mikeServer1!`,
         database: `employee_managementDB`
 
     }
@@ -15,25 +24,24 @@ const connection = mysql.createConnection(
 
 const resetAutoIncrement = (table) => {
     connection.query(
-    `SELECT MAX(id) FROM ${table}`,
-    ((err,res) => {
-        if(err) throw err;
-        let maxarr = Object.values(res[0]);
-        let max;
-        if(maxarr[0]){
-            max = maxarr[0];
-        }
-        else{
-            max = 0;
-        }
-        connection.query(
-            `ALTER TABLE ${table} AUTO_INCREMENT = ${max}`,
-            ((err) => {
-                if(err) throw err;
-                console.log(`Successfully reset id`);
-            })
-        )
-    }) 
+        `SELECT MAX(id) FROM ${table}`,
+        ((err, res) => {
+            if (err) throw err;
+            let maxarr = Object.values(res[0]);
+            let max;
+            if (maxarr[0]) {
+                max = maxarr[0];
+            }
+            else {
+                max = 0;
+            }
+            connection.query(
+                `ALTER TABLE ${table} AUTO_INCREMENT = ${max}`,
+                ((err) => {
+                    if (err) throw err;
+                })
+            )
+        })
     );
 };
 
@@ -42,10 +50,10 @@ const start = () => {
 
     inquirer.prompt([
         {
-            type:`list`,
-            name:`action`,
-            message:`What would you like to do?`,
-            choices:[
+            type: `list`,
+            name: `action`,
+            message: `What would you like to do?`,
+            choices: [
                 `Add a new department`,
                 `Add a new role`,
                 `Add a new employee`,
@@ -56,155 +64,252 @@ const start = () => {
             ]
         }
     ])
-    .then((user) => {
-        if(user.action == `Add a new department`){
-            newDepartment();
-        }
-        else if(user.action == `Add a new role`){
-            newRole();
-        }
-        else if(user.action == `Add a new employee`){
-            newEmployee();
-        }
-        else if(user.action == `View all the existing departments`){
-            
-        }
-        else if(user.action == `View all the existing role`){
-            
-        }
-        else if(user.action == `View all the existing employees`){
-            
-        }
-        else if(user.action == `Update existing employee's role`){
-            
-        }
-        else{
-            console.log('none');
-        }
-    })
+        .then((user) => {
+            if (user.action == `Add a new department`) {
+                newDepartment();
+            }
+            else if (user.action == `Add a new role`) {
+                newRole();
+            }
+            else if (user.action == `Add a new employee`) {
+                newEmployee();
+            }
+            else if (user.action == `View all the existing departments`) {
+                viewDepartments();
+            }
+            else if (user.action == `View all the existing roles`) {
+                viewRoles();
+            }
+            else if (user.action == `View all the existing employees`) {
+                viewEmployees();
+            }
+            else if (user.action == `Update existing employee's role`) {
+                updateEmployeeRole()
+            }
+            else {
+                console.log('none');
+            }
+        })
 };
 
 // Add New Department
 const newDepartment = () => {
+    resetAutoIncrement("department");
     inquirer.prompt(
         {
             type: `input`,
             name: `name`,
-            message:`What is the name of the new department?`
+            message: `What is the name of the new department?`,
+            validate(value) {
+                if (value.length > 0) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
         }
     )
-    .then((user) => {
-        connection.query(
-            `INSERT INTO department SET ?`,
-            {
-                name : user.name
-            }
-        ,
-        ((err) => {
-            if(err) throw err;
-            console.log(`${user.name} has been added successfully!`)
-            start();
-        }))
-    })
+        .then((user) => {
+            connection.query(
+                `INSERT INTO department SET ?`,
+                {
+                    name: user.name
+                }
+                ,
+                ((err) => {
+                    if (err) throw err;
+                    console.log(`${user.name} has been added successfully!`)
+                    start();
+                }))
+        })
 };
 
 // Add New Role
 const newRole = () => {
+    resetAutoIncrement("role");
     inquirer.prompt([
         {
             type: `input`,
             name: `title`,
-            message:`What is the title of the new role?`
+            message: `What is the title of the new role?`,
+            validate(value) {
+                if (value.length > 0) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
         },
         {
             type: `input`,
             name: `salary`,
-            message:`What is the salary of the new role?`
+            message: `What is the salary of the new role?`
         },
         {
             type: `input`,
             name: `id`,
-            message:`What is the corresponding department id?`
+            message: `What is the corresponding department id?`
         }
     ])
-    .then((user) => {
-        connection.query(
-            `INSERT INTO role SET ?`,
-            {
-                title : user.title,
-                salary: user.salary,
-                department_id: user.id
-            }
-        ,
-        ((err) => {
-            if(err){
-                console.log(`There was an error, check if the selected department id exists`)
-                start();
-            }
-            else{
-            console.log(`${user.title} has been added successfully!`)
-            start();
-            }
-        }))
-    })
+        .then((user) => {
+            connection.query(
+                `INSERT INTO role SET ?`,
+                {
+                    title: user.title,
+                    salary: user.salary || null,
+                    department_id: user.id || null,
+                }
+                ,
+                ((err) => {
+                    if (err) {
+                        console.log(`There was an error, check if the selected department id exists`)
+                        start();
+                    }
+                    else {
+                        console.log(`${user.title} has been added successfully!`)
+                        start();
+                    }
+                }))
+        })
 };
-
+// Add New Employee
 const newEmployee = () => {
+    resetAutoIncrement("employee");
     inquirer.prompt([
         {
             type: `input`,
             name: `firstName`,
-            message:`What is the employee's First Name?`
+            message: `What is the employee's First Name?`
         },
         {
             type: `input`,
             name: `lastName`,
-            message:`What is the employee's Last Name?`
+            message: `What is the employee's Last Name?`
         },
         {
             type: `input`,
             name: `role_id`,
-            message:`What is the corresponding role id?`
+            message: `What is the corresponding role id?`
         },
         {
             type: `input`,
             name: `manager_id`,
-            message:`What is the corresponding manager id if it exists?`
+            message: `What is the corresponding manager id if it exists?`
         }
     ])
-    .then((user) => {
-        connection.query(
-            `INSERT INTO employee SET ?`,
-            {
-                first_name : user.firstName,
-                last_name: user.lastName,
-                role_id: user.role_id,
-                manager_id: user.manager_id || null
+        .then((user) => {
+            connection.query(
+                `INSERT INTO employee SET ?`,
+                {
+                    first_name: user.firstName,
+                    last_name: user.lastName,
+                    role_id: user.role_id || null,
+                    manager_id: user.manager_id || null
 
-            }
-        ,
-        ((err) => {
-            if(err){
-                console.log(`There was an error, check if the selected corresponding id's exist`)
-                throw err;
-                start();
-            }
-            else{
-            console.log(`${user.firstName} ${user.lastName} has been added successfully!`)
+                }
+                ,
+                ((err) => {
+                    if (err) {
+                        console.log(`There was an error, check if the selected corresponding id's exist`)
+                        throw err;
+                        start();
+                    }
+                    else {
+                        console.log(`${user.firstName} ${user.lastName} has been added successfully!`)
+                        start();
+                    }
+                }))
+        })
+};
+// View All Departments
+const viewDepartments = () => {
+    connection.query(
+        `SELECT * FROM department`,
+        ((err, res) => {
+            if (err) throw err;
+            let values = [];
+            res.forEach((department) => {
+                values.push(['max', 20])
+                var values = [
+                    ['max', 20],
+                    ['joe', 30]
+                ];
+                console.table(['Id', 'Department Name'], values);
+                console.log(`Id: ${department.id} || Department Name: ${department.name}`)
+            });
             start();
-            }
-        }))
-    })
+        })
+    )
+};
+// View All Roles
+const viewRoles = () => {
+    connection.query(
+        `SELECT * FROM role`,
+        ((err, res) => {
+            if (err) throw err;
+            res.forEach((role) => console.log(`Id: ${role.id} || Title: ${role.title}|| Salary: ${role.salary}`));
+            start();
+        })
+    )
+};
+// View All Employees
+const viewEmployees = () => {
+    connection.query
+    connection.query(
+        `SELECT employee.id AS ID, CONCAT(employee.first_name, ' ', employee.last_name) AS Employee, role.title AS Title,
+        CONCAT(M.first_name, ' ' ,  M.last_name) AS Manager, department.name AS Department, role.salary AS Salary
+        FROM employee
+        LEFT OUTER JOIN role ON (employee.role_id = role.id)
+        LEFT OUTER JOIN department ON (role.department_id = department.id)
+        LEFT OUTER JOIN employee M ON (employee.manager_id = M.id)`,
+        ((err, res) => {
+            if (err) throw err;
+            let employees = [];
+            res.forEach((employee) => {
+                employees.push([employee.ID, employee.Employee, employee.Title, employee.Manager, employee.Department]);
+            });
+            console.table(['Id', 'Employee Name', 'Role', 'Managers', 'Department'], employees);
+            start();
+        })
+    )
 };
 
+const updateEmployeeRole = () => {
+    inquirer.prompt([
+        {
+            type: `list`,
+            name: `title`,
+            message: `What is the title of the new role?`
+        },
+        {
+            type: `input`,
+            name: `title`,
+            message: `What is the title of the new role?`
+        },
+        {
+            type: `input`,
+            name: `salary`,
+            message: `What is the salary of the new role?`
+        },
+        {
+            type: `input`,
+            name: `id`,
+            message: `What is the corresponding department id?`
+        }
+    ])
+}
 
 // Connection to MySql
-connection.connect((err,res) =>{
-    if(err) throw err;
+connection.connect((err, res) => {
+    if (err) throw err;
     console.log(`Connected to Employee Database`)
     // resetAutoIncrement('role');
     start();
 });
+
+// Connection to MySql
 
 // Build a command-line application that at a minimum allows the user to:
 
