@@ -1,16 +1,8 @@
 const mysql = require(`mysql`);
 const inquirer = require('inquirer');
 const cTable = require('console.table');
-// console.table([
-//     {
-//       name: 'foo',
-//       age: 10
-//     }, {
-//       name: 'bar',
-//       age: 20
-//     }
-//   ]);
-// MySql Connection Information
+const { connect } = require('http2');
+
 const connection = mysql.createConnection(
     {
         host: `localhost`,
@@ -229,34 +221,29 @@ const viewDepartments = () => {
         `SELECT * FROM department`,
         ((err, res) => {
             if (err) throw err;
-            let values = [];
-            res.forEach((department) => {
-                values.push(['max', 20])
-                var values = [
-                    ['max', 20],
-                    ['joe', 30]
-                ];
-                console.table(['Id', 'Department Name'], values);
-                console.log(`Id: ${department.id} || Department Name: ${department.name}`)
-            });
+            let departments = [];
+            res.forEach((department) => departments.push([department.id, department.name]));
+            console.table(['Id', 'Department'], departments);
             start();
         })
     )
 };
 // View All Roles
 const viewRoles = () => {
+
     connection.query(
         `SELECT * FROM role`,
         ((err, res) => {
             if (err) throw err;
-            res.forEach((role) => console.log(`Id: ${role.id} || Title: ${role.title}|| Salary: ${role.salary}`));
+            let roles = [];
+            res.forEach((role) => roles.push([role.id, role.title, role.salary]));
+            console.table(['Id', 'Role', 'Salary'], roles);
             start();
         })
     )
 };
 // View All Employees
 const viewEmployees = () => {
-    connection.query
     connection.query(
         `SELECT employee.id AS ID, CONCAT(employee.first_name, ' ', employee.last_name) AS Employee, role.title AS Title,
         CONCAT(M.first_name, ' ' ,  M.last_name) AS Manager, department.name AS Department, role.salary AS Salary
@@ -268,38 +255,69 @@ const viewEmployees = () => {
             if (err) throw err;
             let employees = [];
             res.forEach((employee) => {
-                employees.push([employee.ID, employee.Employee, employee.Title, employee.Manager, employee.Department]);
+                employees.push([employee.ID, employee.Employee, employee.Title, employee.Manager, employee.Department,employee.Salary]);
             });
-            console.table(['Id', 'Employee Name', 'Role', 'Managers', 'Department'], employees);
+            console.table(['Id', 'Employee Name', 'Role', 'Managers', 'Department','Salary'], employees);
             start();
         })
     )
 };
 
 const updateEmployeeRole = () => {
-    inquirer.prompt([
-        {
-            type: `list`,
-            name: `title`,
-            message: `What is the title of the new role?`
-        },
-        {
-            type: `input`,
-            name: `title`,
-            message: `What is the title of the new role?`
-        },
-        {
-            type: `input`,
-            name: `salary`,
-            message: `What is the salary of the new role?`
-        },
-        {
-            type: `input`,
-            name: `id`,
-            message: `What is the corresponding department id?`
-        }
-    ])
-}
+    let employees = [];
+    connection.query(
+        `SELECT * FROM employee`,
+        ((err, res) => {
+            if (err) throw err;
+            res.forEach((employee) => employees.push(`${employee.first_name} ${employee.last_name}`));
+            inquirer.prompt([
+
+                {
+                    type: `list`,
+                    name: `employee`,
+                    choices: employees,
+                    message: `Which employee's role do you want to change?`
+                }
+            ])
+                .then((user) => {
+                    let roles = [];
+                    let employee = user.employee.split(" ");
+                    console.log(employee);
+                    connection.query(
+                        `SELECT title FROM role`,
+                        ((err, res) => {
+                            if (err) throw err;
+                            res.forEach((role) => roles.push(role.title));
+                            inquirer.prompt([
+
+                                {
+                                    type: `list`,
+                                    name: `title`,
+                                    choices: roles,
+                                    message: `What is the employees new role?`
+                                }
+                            ])
+                                .then((user) => {
+                                    connection.query(
+                                        ` UPDATE employee e
+                                        INNER JOIN role r
+                                        ON r.title = "${user.title}"
+                                        SET e.role_id = r.id
+                                        WHERE e.first_name = "${employee[0]}" AND e.last_name = "${employee[1]}" `,
+                                        ((err) => {
+                                            if (err) throw err;
+                                            console.log(`The employee's role has been updated`)
+                                            start();
+                                        })
+
+                                    )
+                                });
+                        }));
+                });
+        })
+    )
+};
+
 
 // Connection to MySql
 connection.connect((err, res) => {
