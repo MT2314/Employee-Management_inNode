@@ -1,7 +1,28 @@
 const mysql = require(`mysql`);
 const inquirer = require('inquirer');
 const cTable = require('console.table');
-const { connect } = require('http2');
+var asciify = require('asciify-image');
+
+var options = {
+    fit: 'box',
+    width: 200,
+    height: 20
+}
+
+asciify('Assets/EMS.jpg', options, function (err, asciified) {
+    if (err) throw err;
+
+    // Print to console
+    console.log(asciified);
+    // Connection to MySql
+
+    connection.connect((err, res) => {
+        if (err) throw err;
+        console.log(`Connected to Employee Database`)
+        // resetAutoIncrement('role');
+        start();
+    });
+});
 
 const connection = mysql.createConnection(
     {
@@ -13,6 +34,7 @@ const connection = mysql.createConnection(
 
     }
 );
+
 
 const resetAutoIncrement = (table) => {
     connection.query(
@@ -255,9 +277,9 @@ const viewEmployees = () => {
             if (err) throw err;
             let employees = [];
             res.forEach((employee) => {
-                employees.push([employee.ID, employee.Employee, employee.Title, employee.Manager, employee.Department,employee.Salary]);
+                employees.push([employee.ID, employee.Employee, employee.Title, employee.Manager, employee.Department, employee.Salary]);
             });
-            console.table(['Id', 'Employee Name', 'Role', 'Managers', 'Department','Salary'], employees);
+            console.table(['Id', 'Employee Name', 'Role', 'Managers', 'Department', 'Salary'], employees);
             start();
         })
     )
@@ -319,30 +341,3 @@ const updateEmployeeRole = () => {
 };
 
 
-// Connection to MySql
-connection.connect((err, res) => {
-    if (err) throw err;
-    console.log(`Connected to Employee Database`)
-    // resetAutoIncrement('role');
-    start();
-});
-
-// Connection to MySql
-
-// Build a command-line application that at a minimum allows the user to:
-
-//   * Add departments, roles, employees
-
-//   * View departments, roles, employees
-
-//   * Update employee roles
-
-// Bonus points if you're able to:
-
-//   * Update employee managers
-
-//   * View employees by manager
-
-//   * Delete departments, roles, and employees
-
-//   * View the total utilized budget of a department -- ie the combined salaries of all employees in that department
