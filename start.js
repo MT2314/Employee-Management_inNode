@@ -60,7 +60,6 @@ const resetAutoIncrement = (table) => {
 };
 
 const start = () => {
-    console.log(`Welcome to your Employee Management System!`);
 
     inquirer.prompt([
         {
@@ -304,7 +303,6 @@ const updateEmployeeRole = () => {
                 .then((user) => {
                     let roles = [];
                     let employee = user.employee.split(" ");
-                    console.log(employee);
                     connection.query(
                         `SELECT title FROM role`,
                         ((err, res) => {
