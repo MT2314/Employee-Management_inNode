@@ -4,7 +4,7 @@
 A Employee Management Application based in Node.js Using MYSQL Database. 
 
 
-<img src="assets/employee-management-system.gif" alt="Employee Management System width" width="600"/>
+<img src="/employee-management-system.gif" alt="Employee Management System width" width="600"/>
 
 ## Employee Management System application description and goal
 ---
